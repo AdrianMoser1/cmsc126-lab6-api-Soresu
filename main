@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pokémon Imposter Quiz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #f5f5f0; font-family: 'Inter', sans-serif; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 2rem 1rem; }
+    #app { width: 100%; max-width: 620px; }
+    #header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    #game-title { font-size: 13px; font-weight: 500; color: #1a1a1a; }
+    #progress-wrap { display: flex; align-items: center; gap: 8px; }
+    #progress-bar-bg { width: 120px; height: 6px; background: #e0e0d8; border-radius: 99px; overflow: hidden; }
+    #progress-bar { height: 6px; background: #E24B4A; border-radius: 99px; transition: width 0.4s; width: 0%; }
+    #round-label { font-size: 11px; color: #666; min-width: 40px; text-align: right; }
+    #dots { display: flex; gap: 4px; justify-content: center; margin-bottom: 1rem; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #e0e0d8; transition: background 0.2s; }
+    .dot.done-ok { background: #639922; }
+    .dot.done-ng { background: #E24B4A; }
+    .dot.active { background: #378ADD; }
+    #loading-screen { text-align: center; padding: 3rem 1rem; }
+    #loading-screen p { font-size: 13px; color: #666; margin-top: 1rem; }
+    .spin { display: inline-block; width: 32px; height: 32px; border: 3px solid #e0e0d8; border-top-color: #E24B4A; border-radius: 50%; animation: sp 0.8s linear infinite; }
+    @keyframes sp { to { transform: rotate(360deg); } }
+    #quiz-area { display: none; }
+    #poke-card { background: #fff; border: 0.5px solid #ddd; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; transition: border-color 0.3s; }
+    #poke-card.correct-card { border-color: #639922; }
+    #poke-card.wrong-card { border-color: #A32D2D; }
+    #poke-top { display: flex; align-items: center; gap: 1rem; }
+    #sprite { width: 88px; height: 88px; image-rendering: pixelated; }
+    #poke-meta { flex: 1; }
+    #poke-num { font-size: 11px; color: #999; margin-bottom: 4px; }
+    #poke-name { font-size: 18px; font-weight: 500; color: #1a1a1a; text-transform: capitalize; margin-bottom: 8px; }
+    #type-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+    .tbadge { font-size: 11px; font-weight: 500; padding: 2px 10px; border-radius: 99px; text-transform: capitalize; }
+    #ability-row { font-size: 12px; color: #666; }
+    #ability-row span { color: #1a1a1a; font-weight: 500; text-transform: capitalize; }
+    #question-area { background: #f5f5f0; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+    #q-text { font-size: 13px; font-weight: 500; color: #1a1a1a; margin-bottom: .5rem; line-height: 1.5; }
+    #q-sub { font-size: 11px; color: #888; margin-bottom: 1rem; }
+    #choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .choice { background: #fff; border: 0.5px solid #ccc; border-radius: 8px; padding: 10px 12px; font-size: 12px; font-weight: 500; color: #1a1a1a; cursor: pointer; text-align: left; font-family: inherit; text-transform: capitalize; transition: border-color 0.12s, background 0.12s; line-height: 1.4; }
+    .choice:hover:not(:disabled) { border-color: #aaa; background: #f5f5f0; }
+    .choice.correct { background: #EAF3DE; border-color: #639922; color: #27500A; }
+    .choice.wrong { background: #FCEBEB; border-color: #A32D2D; color: #501313; }
+    .choice.dim { opacity: 0.38; }
+    #feedback-box { display: none; border-radius: 8px; padding: .875rem 1rem; margin-bottom: 1rem; }
+    #feedback-box.win { background: #EAF3DE; border: 0.5px solid #639922; }
+    #feedback-box.lose { background: #FCEBEB; border: 0.5px solid #A32D2D; }
+    #feedback-title { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+    #feedback-box.win #feedback-title { color: #27500A; }
+    #feedback-box.lose #feedback-title { color: #501313; }
+    #feedback-detail { font-size: 12px; }
+    #feedback-box.win #feedback-detail { color: #3B6D11; }
+    #feedback-box.lose #feedback-detail { color: #A32D2D; }
+    #continue-btn { display: none; width: 100%; border: none; border-radius: 8px; padding: 0; cursor: pointer; font-family: inherit; overflow: hidden; }
+    #btn-inner { display: flex; align-items: center; gap: 12px; padding: 12px 16px; transition: background 0.15s; }
+    #continue-btn.to-next { background: #1a1a1a; }
+    #continue-btn.to-next #btn-inner:hover { background: rgba(255,255,255,0.08); }
+    #continue-btn.to-results { background: #E24B4A; }
+    #continue-btn.to-results #btn-inner:hover { background: rgba(0,0,0,0.1); }
+    #btn-sprite { width: 44px; height: 44px; image-rendering: pixelated; display: block; }
+    #btn-text-wrap { flex: 1; text-align: left; }
+    #btn-label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.55); margin-bottom: 2px; }
+    #btn-name { font-size: 14px; font-weight: 500; color: #fff; text-transform: capitalize; }
+    #btn-arrow { font-size: 16px; color: rgba(255,255,255,0.6); }
+    #results-screen { display: none; text-align: center; padding: 1.5rem 1rem; }
+    #results-score { font-size: 40px; font-weight: 500; color: #1a1a1a; margin-bottom: 4px; }
+    #results-label { font-size: 13px; color: #666; margin-bottom: 1.5rem; }
+    #results-breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.5rem; text-align: left; }
+    .rb-item { background: #f5f5f0; border-radius: 8px; padding: .75rem; display: flex; align-items: center; gap: 10px; }
+    .rb-sprite { width: 40px; height: 40px; image-rendering: pixelated; }
+    .rb-info { flex: 1; min-width: 0; }
+    .rb-name { font-size: 12px; font-weight: 500; color: #1a1a1a; text-transform: capitalize; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rb-result { font-size: 11px; margin-top: 2px; }
+    .rb-result.ok { color: #3B6D11; }
+    .rb-result.ng { color: #A32D2D; }
+    #play-again { background: #E24B4A; color: #fff; border: none; border-radius: 8px; padding: 10px 28px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; }
+    #play-again:hover { background: #c43a39; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <span id="game-title">Pokémon imposter quiz</span>
+    <div id="progress-wrap">
+      <div id="progress-bar-bg"><div id="progress-bar"></div></div>
+      <span id="round-label">0 / 10</span>
+    </div>
+  </div>
+  <div id="dots"></div>
+
+  <div id="loading-screen">
+    <div class="spin"></div>
+    <p>Fetching 10 Pokémon from PokéAPI...</p>
+  </div>
+
+  <div id="quiz-area">
+    <div id="poke-card">
+      <div id="poke-top">
+        <img id="sprite" alt=""/>
+        <div id="poke-meta">
+          <div id="poke-num"></div>
+          <div id="poke-name"></div>
+          <div id="type-row"></div>
+          <div id="ability-row">Abilities: <span id="ability-val"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="question-area">
+      <div id="q-text"></div>
+      <div id="q-sub">Pick the one that does NOT belong to this Pokémon.</div>
+      <div id="choices"></div>
+    </div>
+
+    <div id="feedback-box">
+      <div id="feedback-title"></div>
+      <div id="feedback-detail"></div>
+    </div>
+
+    <button id="continue-btn" onclick="advance()">
+      <div id="btn-inner">
+        <img id="btn-sprite" alt=""/>
+        <div id="btn-text-wrap">
+          <div id="btn-label">Next up</div>
+          <div id="btn-name"></div>
+        </div>
+        <span id="btn-arrow">→</span>
+      </div>
+    </button>
+  </div>
+
+  <div id="results-screen">
+    <div id="results-score"></div>
+    <div id="results-label"></div>
+    <div id="results-breakdown"></div>
+    <button id="play-again" onclick="startGame()">Play again</button>
+  </div>
+</div>
+
+<script>
+const TYPE_COLORS={normal:'#B4B2A9',fire:'#EF9F27',water:'#85B7EB',electric:'#FAC775',grass:'#97C459',ice:'#9FE1CB',fighting:'#D85A30',poison:'#AFA9EC',ground:'#FAC775',flying:'#85B7EB',psychic:'#ED93B1',bug:'#C0DD97',rock:'#D3D1C7',ghost:'#7F77DD',dragon:'#534AB7',dark:'#5F5E5A',steel:'#B4B2A9',fairy:'#F4C0D1'};
+const TYPE_TEXT={normal:'#444441',fire:'#633806',water:'#0C447C',electric:'#633806',grass:'#27500A',ice:'#085041',fighting:'#4A1B0C',poison:'#3C3489',ground:'#633806',flying:'#0C447C',psychic:'#72243E',bug:'#27500A',rock:'#444441',ghost:'#26215C',dragon:'#26215C',dark:'#2C2C2A',steel:'#444441',fairy:'#4B1528'};
+const TOTAL=898,ROUNDS=10;
+let rounds=[],current=0,score=0,results=[],answered=false;
+
+function randId(exclude=[]){let id;do{id=Math.floor(Math.random()*TOTAL)+1;}while(exclude.includes(id));return id;}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+async function fetchPoke(id){const r=await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);return r.json();}
+
+async function buildRound(mainId, pool) {
+  const main = await fetchPoke(mainId);
+  const types = main.types.map(t => t.type.name);
+  const abilities = main.abilities.map(a => a.ability.name);
+  const sprite = main.sprites.front_default || '';
+  
+  // Randomly decide if this round asks about Types or Abilities
+  const qType = Math.random() < 0.5 ? 'type' : 'ability';
+  
+  let choices = [];
+  let imposterVal = '';
+
+  if (qType === 'type') {
+    // 1. Get the REAL types
+    let realTypes = [...types];
+    
+    // 2. Identify an IMPOSTER type (one the Pokémon DOES NOT have)
+    const allTypes = ['normal','fire','water','electric','grass','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'];
+    const possibleImposters = allTypes.filter(t => !types.includes(t));
+    imposterVal = possibleImposters[Math.floor(Math.random() * possibleImposters.length)];
+
+    // 3. Fill the remaining 'Real' slots without duplicates
+    // If Pokémon has 2 types, we need 1 more 'Real' looking thing. 
+    // If it has 1 type, we need 2 more. 
+    // We will pull from the Pokémon's real abilities to fill 'Real' slots if types run out.
+    let realPool = [...realTypes, ...abilities]; 
+    let selectedReal = [];
+    
+    for (let item of realPool) {
+      if (selectedReal.length < 3 && !selectedReal.includes(item)) {
+        selectedReal.push(item);
+      }
+    }
+    
+    choices = shuffle([...selectedReal, imposterVal]);
+
+  } else {
+    // 1. Get the REAL abilities
+    let realAbilities = [...abilities];
+
+    // 2. Identify an IMPOSTER ability from the pool of other Pokémon
+    const poolAbilities = [...new Set(pool.flatMap(p => p.abilities.map(a => a.ability.name)))];
+    const possibleImposters = poolAbilities.filter(a => !abilities.includes(a));
+    
+    // Fallback if the pool is somehow empty or matches perfectly
+    imposterVal = possibleImposters.length > 0 
+      ? possibleImposters[Math.floor(Math.random() * possibleImposters.length)] 
+      : 'Sturdy'; 
+
+    // 3. Fill the 3 'Real' slots
+    // If the Pokémon has fewer than 3 abilities, we supplement with its real Types
+    let realPool = [...realAbilities, ...types];
+    let selectedReal = [];
+
+    for (let item of realPool) {
+      if (selectedReal.length < 3 && !selectedReal.includes(item)) {
+        selectedReal.push(item);
+      }
+    }
+
+    choices = shuffle([...selectedReal, imposterVal]);
+  }
+
+  return {
+    main,
+    types,
+    abilities,
+    sprite,
+    qType,
+    correctVal: imposterVal, // The user must click the imposter to win
+    choices: choices
+  };
+}
+async function startGame(){
+  document.getElementById('results-screen').style.display='none';
+  document.getElementById('quiz-area').style.display='none';
+  document.getElementById('loading-screen').style.display='block';
+  rounds=[];current=0;score=0;results=[];
+  buildDots();
+  const ids=[];while(ids.length<ROUNDS)ids.push(randId(ids));
+  const poolIds=[];while(poolIds.length<8)poolIds.push(randId([...ids,...poolIds]));
+  const pool=await Promise.all(poolIds.map(fetchPoke));
+  for(let i=0;i<ROUNDS;i++)rounds.push(await buildRound(ids[i],pool));
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('quiz-area').style.display='block';
+  showRound();
+}
+
+function buildDots(){
+  const el=document.getElementById('dots');el.innerHTML='';
+  for(let i=0;i<ROUNDS;i++){const d=document.createElement('div');d.className='dot';d.id='dot-'+i;el.appendChild(d);}
+}
+function updateDot(idx,state){const d=document.getElementById('dot-'+idx);if(d)d.className='dot '+(state||'');}
+
+function showRound(){
+  answered=false;
+  document.getElementById('poke-card').className='';
+  document.getElementById('feedback-box').style.display='none';
+  document.getElementById('feedback-box').className='';
+  document.getElementById('continue-btn').style.display='none';
+
+  const r=rounds[current];
+  document.getElementById('poke-num').textContent='#'+r.main.id;
+  document.getElementById('poke-name').textContent=r.main.name;
+  document.getElementById('sprite').src=r.sprite;
+
+  const typeRow=document.getElementById('type-row');typeRow.innerHTML='';
+  r.types.forEach(t=>{
+    const b=document.createElement('span');b.className='tbadge';b.textContent=t;
+    b.style.background=TYPE_COLORS[t]||'#B4B2A9';b.style.color=TYPE_TEXT[t]||'#2C2C2A';
+    typeRow.appendChild(b);
+  });
+  document.getElementById('ability-val').textContent=r.abilities.join(', ');
+
+  const choicesEl=document.getElementById('choices');choicesEl.innerHTML='';
+  r.choices.forEach(c=>{
+    const btn=document.createElement('button');btn.className='choice';btn.textContent=c;
+    btn.onclick=()=>pick(c,r);choicesEl.appendChild(btn);
+  });
+
+  document.getElementById('progress-bar').style.width=((current/ROUNDS)*100)+'%';
+  document.getElementById('round-label').textContent=(current+1)+' / '+ROUNDS;
+  updateDot(current,'active');
+}
+
+function pick(chosen,r){
+  if(answered)return;
+  answered=true;
+  const isCorrect=chosen===r.correctVal;
+  results.push({name:r.main.name,sprite:r.sprite,correct:isCorrect,chosen,answer:r.correctVal,qType:r.qType});
+  if(isCorrect)score++;
+  updateDot(current,isCorrect?'done-ok':'done-ng');
+
+  document.getElementById('poke-card').className=isCorrect?'correct-card':'wrong-card';
+
+  document.querySelectorAll('.choice').forEach(btn=>{
+    btn.disabled=true;
+    const v=btn.textContent;
+    if(v===r.correctVal)btn.classList.add('correct');
+    else if(v===chosen)btn.classList.add('wrong');
+    else btn.classList.add('dim');
+  });
+
+  const fb=document.getElementById('feedback-box');
+  fb.className=isCorrect?'win':'lose';
+  document.getElementById('feedback-title').textContent=isCorrect?'Correct! You found the imposter.':'Not quite!';
+  document.getElementById('feedback-detail').textContent=isCorrect
+    ?`"${r.correctVal}" is not a ${r.qType} of ${r.main.name} — it was the fake.`
+    :`"${chosen}" is actually a real ${r.qType}. The imposter was "${r.correctVal}".`;
+  fb.style.display='block';
+
+  const btn=document.getElementById('continue-btn');
+  const isLast=current===ROUNDS-1;
+  if(isLast){
+    btn.className='to-results';
+    document.getElementById('btn-sprite').style.display='none';
+    document.getElementById('btn-label').textContent='All done!';
+    document.getElementById('btn-name').textContent='See your results';
+    document.getElementById('btn-arrow').textContent='→';
+  } else {
+    const next=rounds[current+1];
+    btn.className='to-next';
+    const bsprite=document.getElementById('btn-sprite');
+    bsprite.style.display='block';
+    bsprite.src=next.sprite;
+    bsprite.alt=next.main.name;
+    document.getElementById('btn-label').textContent='Next up';
+    document.getElementById('btn-name').textContent='#'+next.main.id+' '+next.main.name;
+    document.getElementById('btn-arrow').textContent='→';
+  }
+  btn.style.display='block';
+}
+
+function advance(){
+  current++;
+  if(current>=ROUNDS){showResults();return;}
+  showRound();
+}
+
+function showResults(){
+  document.getElementById('quiz-area').style.display='none';
+  document.getElementById('progress-bar').style.width='100%';
+  document.getElementById('round-label').textContent='10 / 10';
+  const pct=Math.round((score/ROUNDS)*100);
+  const lbl=score<=2?'Keep practicing!':score<=4?'Getting there!':score<=6?'Not bad!':score<=7?'Good job!':score<=9?'Great work!':'Pokémon master!';
+  document.getElementById('results-score').textContent=score+'/'+ROUNDS;
+  document.getElementById('results-label').textContent=pct+'% — '+lbl;
+  const bd=document.getElementById('results-breakdown');bd.innerHTML='';
+  results.forEach(r=>{
+    const div=document.createElement('div');div.className='rb-item';
+    div.innerHTML=`<img class="rb-sprite" src="${r.sprite}" alt="${r.name}"/>
+      <div class="rb-info">
+        <div class="rb-name">${r.name}</div>
+        <div class="rb-result ${r.correct?'ok':'ng'}">${r.correct?'Correct':'Wrong — '+r.answer}</div>
+      </div>`;
+    bd.appendChild(div);
+  });
+  document.getElementById('results-screen').style.display='block';
+}
+
+startGame();
+</script>
+</body>
+</html>
