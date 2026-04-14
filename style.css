@@ -242,3 +242,23 @@ body {
   background: var(--poke-yellow); font-weight: 900; font-size: 1.2rem; cursor: pointer;
   box-shadow: 5px 5px 0px var(--poke-dark);
 }
+
+.rb-info { 
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: left; /* Ensures text is tidy regardless of name length */
+}
+
+.rb-name { 
+  font-size: 1.1rem; 
+  font-weight: 800; 
+  color: var(--poke-blue); 
+  text-transform: capitalize;
+  margin-bottom: 2px; /* Pulls the "Wrong/Correct" text closer */
+}
+
+.rb-result {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
