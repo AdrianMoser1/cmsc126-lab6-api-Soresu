@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pokémon Imposter Quiz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <div id="game-title">Pokémon Imposter</div>
+    <div id="progress-wrap">
+      <div id="progress-bar-bg"><div id="progress-bar"></div></div>
+      <span id="round-label">0 / 10</span>
+    </div>
+  </div>
+
+  <div class="content-wrapper">
+    <div id="loading-screen">
+      <div class="poke-spinner"></div>
+      <p>Locating Wild Pokémon...</p>
+    </div>
+
+    <div id="quiz-area">
+      <div id="poke-card">
+        <div id="poke-top">
+          <div class="sprite-container">
+            <img id="sprite" alt=""/>
+          </div>
+          <div id="poke-meta">
+            <div id="poke-num"></div>
+            <div id="poke-name"></div>
+            <div id="type-row"></div>
+            <div id="ability-row">Abilities: <span id="ability-val"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="question-area">
+        <div id="q-text">Find the Imposter!</div>
+        <div id="q-sub">Which of these does <strong id="q-poke-name"></strong> NOT have?</div>
+        <div id="choices"></div>
+      </div>
+
+      <div id="feedback-box">
+        <div id="feedback-title"></div>
+        <div id="feedback-detail"></div>
+      </div>
+
+      <button id="continue-btn" onclick="advance()">
+        <div id="btn-inner">
+          <img id="btn-sprite" alt=""/>
+          <div id="btn-text-wrap">
+            <div id="btn-label">Next up</div>
+            <div id="btn-name"></div>
+          </div>
+          <span id="btn-arrow">→</span>
+        </div>
+      </button>
+    </div>
+
+    <div id="results-screen">
+      <div id="results-score"></div>
+      <div id="results-label"></div>
+      <div id="results-breakdown"></div>
+      <button id="play-again" onclick="startGame()">Play Again</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
