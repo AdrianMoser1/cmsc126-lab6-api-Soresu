@@ -35,6 +35,7 @@ async function buildRound(mainId, pool) {
     for (let item of realPool) {
       if (selectedReal.length < 3 && !selectedReal.includes(item)) { selectedReal.push(item); }
     }
+
     choices = shuffle([...selectedReal, imposterVal]);
   } else {
     let realAbilities = [...abilities];
@@ -101,6 +102,9 @@ function showRound() {
   
   document.getElementById('ability-val').textContent = r.abilities.join(', ');
 
+  typeRow.style.visibility = 'hidden';
+  document.getElementById('ability-row').style.visibility = 'hidden';
+
   const choicesEl = document.getElementById('choices');
   choicesEl.innerHTML = '';
   r.choices.forEach(c => {
@@ -119,6 +123,10 @@ function showRound() {
 function pick(chosen, r) {
   if(answered) return;
   answered = true;
+
+  document.getElementById('type-row').style.visibility = 'visible';
+  document.getElementById('ability-row').style.visibility = 'visible';
+
   const isCorrect = (chosen === r.correctVal);
   
   results.push({ name: r.main.name, sprite: r.sprite, correct: isCorrect, chosen, answer: r.correctVal, qType: r.qType });
